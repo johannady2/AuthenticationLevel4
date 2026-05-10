@@ -161,7 +161,31 @@ passport.use("google", new GoogleStrategy({
   userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
 }, async (accessToken, refreshToken, profile, cb) => {
   console.log(profile);
-  return cb(null, profile);
+
+    try{
+      db.query("SELECT * FROM users WHERE email = $1", [profile.emails[0].value], async (err, result) => {
+        if (err) {
+          console.error("Error querying database:", err);
+          return cb(err);
+        }
+        if (result.rows.length > 0) {
+          // User already exists, log them in
+          return cb(null, result.rows[0]);
+        } else {
+          // User does not exist, create a new user
+          const insertResult = await db.query(
+            "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+            [profile.emails[0].value, "google"+ profile.id]
+          );
+          cb(null, insertResult.rows[0]);
+        }
+      });
+    }catch(err){
+      return cb(err);
+    }
+
+
+  //return cb(null, profile);
 }));
 
 passport.serializeUser((user, cb) => {
