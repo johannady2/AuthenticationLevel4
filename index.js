@@ -80,6 +80,17 @@ app.get("/auth/google/secrets",
   }
 );
 
+
+app.get("/logout", (req, res) => {
+  req.logout(function (err) {
+    if (err) {
+      console.log(err);
+      return next(err);
+    }
+    res.redirect("/");
+  });
+});
+
 app.post(
   "/login",
   passport.authenticate("local", {
